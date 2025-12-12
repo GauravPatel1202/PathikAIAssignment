@@ -1,5 +1,5 @@
 import { useState, useEffect, MouseEvent } from 'react';
-import { Plus, Rocket, CheckCircle, DollarSign, LayoutGrid, List as ListIcon, BarChart3, PauseCircle, TrendingUp } from 'lucide-react';
+import { Plus, Rocket, CheckCircle, DollarSign, LayoutGrid, List as ListIcon, BarChart3, PauseCircle, TrendingUp, Layers } from 'lucide-react';
 import { getCampaigns, publishCampaign, pauseCampaign } from '../api';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
@@ -8,9 +8,10 @@ import { Campaign } from '../types';
 
 interface CampaignListProps {
   onNewCampaign: () => void;
+  onViewAdGroups: (campaign: Campaign) => void;
 }
 
-export default function CampaignList({ onNewCampaign }: CampaignListProps) {
+export default function CampaignList({ onNewCampaign, onViewAdGroups }: CampaignListProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null); 
@@ -176,6 +177,7 @@ export default function CampaignList({ onNewCampaign }: CampaignListProps) {
                     campaign={camp} 
                     onPublish={handlePublish}
                     onDisable={handleDisable}
+                    onViewAdGroups={onViewAdGroups}
                     processingId={processing}
                     index={i}
                   />
@@ -274,11 +276,12 @@ interface CampaignCardProps {
   campaign: Campaign;
   onPublish: (id: string, e?: MouseEvent) => void;
   onDisable: (id: string, e?: MouseEvent) => void;
+  onViewAdGroups: (campaign: Campaign) => void;
   processingId: string | null;
   index: number;
 }
 
-function CampaignCard({ campaign, onPublish, onDisable, processingId, index }: CampaignCardProps) {
+function CampaignCard({ campaign, onPublish, onDisable, onViewAdGroups, processingId, index }: CampaignCardProps) {
   const isProcessing = processingId === campaign.id;
 
   return (
@@ -326,6 +329,17 @@ function CampaignCard({ campaign, onPublish, onDisable, processingId, index }: C
            </div>
         </div>
       )}
+
+      {/* Ad Groups Button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onViewAdGroups(campaign); }}
+        className="w-full mb-4 py-2 px-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 text-sm font-medium hover:bg-purple-500/20 transition-all flex items-center justify-center gap-2"
+      >
+        <Layers size={14} />
+        Ad Groups {campaign.ad_groups_count !== undefined && campaign.ad_groups_count > 0 && (
+          <span className="bg-purple-500/20 px-1.5 py-0.5 rounded text-xs">{campaign.ad_groups_count}</span>
+        )}
+      </button>
 
       <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
          <div className="mr-2">

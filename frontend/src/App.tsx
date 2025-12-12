@@ -1,11 +1,44 @@
 import { useState } from 'react';
 import CampaignList from './components/CampaignList';
 import CampaignForm from './components/CampaignForm';
+import AdGroupList from './components/AdGroupList';
+import AdGroupForm from './components/AdGroupForm';
 import { LayoutDashboard } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import { Campaign, AdGroup } from './types';
+
+type ViewType = 'campaign-list' | 'campaign-form' | 'adgroup-list' | 'adgroup-form';
 
 function App() {
-  const [view, setView] = useState('list'); // 'list' | 'form'
+  const [view, setView] = useState<ViewType>('campaign-list');
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [selectedAdGroup, setSelectedAdGroup] = useState<AdGroup | null>(null);
+
+  const handleViewAdGroups = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setView('adgroup-list');
+  };
+
+  const handleNewAdGroup = () => {
+    setSelectedAdGroup(null);
+    setView('adgroup-form');
+  };
+
+  const handleEditAdGroup = (adGroup: AdGroup) => {
+    setSelectedAdGroup(adGroup);
+    setView('adgroup-form');
+  };
+
+  const handleBackToCampaigns = () => {
+    setSelectedCampaign(null);
+    setSelectedAdGroup(null);
+    setView('campaign-list');
+  };
+
+  const handleBackToAdGroups = () => {
+    setSelectedAdGroup(null);
+    setView('adgroup-list');
+  };
 
   return (
     <div>
@@ -25,7 +58,7 @@ function App() {
         <div className="container py-4 flex items-center justify-between">
           <div 
              className="flex items-center gap-3 cursor-pointer group" 
-             onClick={() => setView('list')}
+             onClick={handleBackToCampaigns}
           >
              <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-lg text-white shadow-lg group-hover:shadow-blue-500/50 transition-all duration-300">
                 <LayoutDashboard size={24} />
@@ -60,14 +93,35 @@ function App() {
       </header>
 
       <main className="container py-8 relative z-0">
-        {view === 'list' && (
-          <CampaignList onNewCampaign={() => setView('form')} />
+        {view === 'campaign-list' && (
+          <CampaignList 
+            onNewCampaign={() => setView('campaign-form')} 
+            onViewAdGroups={handleViewAdGroups}
+          />
         )}
         
-        {view === 'form' && (
+        {view === 'campaign-form' && (
           <CampaignForm 
-            onCancel={() => setView('list')} 
-            onSuccess={() => setView('list')} 
+            onCancel={handleBackToCampaigns} 
+            onSuccess={handleBackToCampaigns} 
+          />
+        )}
+
+        {view === 'adgroup-list' && selectedCampaign && (
+          <AdGroupList
+            campaign={selectedCampaign}
+            onBack={handleBackToCampaigns}
+            onNewAdGroup={handleNewAdGroup}
+            onEditAdGroup={handleEditAdGroup}
+          />
+        )}
+
+        {view === 'adgroup-form' && selectedCampaign && (
+          <AdGroupForm
+            campaign={selectedCampaign}
+            adGroup={selectedAdGroup}
+            onCancel={handleBackToAdGroups}
+            onSuccess={handleBackToAdGroups}
           />
         )}
       </main>

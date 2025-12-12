@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
-from models import db, Campaign
+from models import db, Campaign, AdGroup
 from config import Config
 from google_ads_service import GoogleAdsService
 from datetime import datetime
@@ -18,6 +18,10 @@ ads_service = GoogleAdsService(Config())
 
 with app.app_context():
     db.create_all()
+
+# ============================================
+# CAMPAIGN ENDPOINTS
+# ============================================
 
 @app.route('/api/campaigns', methods=['POST'])
 def create_campaign():
@@ -67,6 +71,17 @@ def get_campaigns():
     try:
         campaigns = Campaign.query.order_by(Campaign.created_at.desc()).all()
         return jsonify([c.to_dict() for c in campaigns]), 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<uuid:id>', methods=['GET'])
+def get_campaign(id):
+    try:
+        campaign = Campaign.query.get_or_404(id)
+        result = campaign.to_dict()
+        result['ad_groups'] = [ag.to_dict() for ag in campaign.ad_groups]
+        return jsonify(result), 200
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
@@ -123,6 +138,155 @@ def pause_campaign(id):
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+
+# ============================================
+# AD GROUP ENDPOINTS
+# ============================================
+
+@app.route('/api/campaigns/<uuid:campaign_id>/ad-groups', methods=['GET'])
+def get_ad_groups(campaign_id):
+    """Get all ad groups for a campaign"""
+    try:
+        campaign = Campaign.query.get_or_404(campaign_id)
+        ad_groups = AdGroup.query.filter_by(campaign_id=campaign_id).order_by(AdGroup.created_at.desc()).all()
+        return jsonify([ag.to_dict() for ag in ad_groups]), 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<uuid:campaign_id>/ad-groups', methods=['POST'])
+def create_ad_group(campaign_id):
+    """Create a new ad group for a campaign"""
+    try:
+        campaign = Campaign.query.get_or_404(campaign_id)
+        data = request.json
+        
+        # Validation
+        if 'name' not in data:
+            return jsonify({'error': 'Missing field: name'}), 400
+
+        ad_group = AdGroup(
+            campaign_id=campaign_id,
+            name=data['name'],
+            status=data.get('status', 'ENABLED'),
+            target_audience=data.get('target_audience'),
+            keywords=data.get('keywords'),
+            cpc_bid=data.get('cpc_bid'),
+            cpm_bid=data.get('cpm_bid'),
+            ad_headline=data.get('ad_headline'),
+            ad_headline_2=data.get('ad_headline_2'),
+            ad_headline_3=data.get('ad_headline_3'),
+            ad_description=data.get('ad_description'),
+            ad_description_2=data.get('ad_description_2'),
+            final_url=data.get('final_url'),
+            display_url=data.get('display_url')
+        )
+        
+        db.session.add(ad_group)
+        db.session.commit()
+        
+        return jsonify(ad_group.to_dict()), 201
+    
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ad-groups/<uuid:id>', methods=['GET'])
+def get_ad_group(id):
+    """Get a single ad group by ID"""
+    try:
+        ad_group = AdGroup.query.get_or_404(id)
+        return jsonify(ad_group.to_dict()), 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ad-groups/<uuid:id>', methods=['PUT'])
+def update_ad_group(id):
+    """Update an ad group"""
+    try:
+        ad_group = AdGroup.query.get_or_404(id)
+        data = request.json
+        
+        # Update fields
+        if 'name' in data:
+            ad_group.name = data['name']
+        if 'status' in data:
+            ad_group.status = data['status']
+        if 'target_audience' in data:
+            ad_group.target_audience = data['target_audience']
+        if 'keywords' in data:
+            ad_group.keywords = data['keywords']
+        if 'cpc_bid' in data:
+            ad_group.cpc_bid = data['cpc_bid']
+        if 'cpm_bid' in data:
+            ad_group.cpm_bid = data['cpm_bid']
+        if 'ad_headline' in data:
+            ad_group.ad_headline = data['ad_headline']
+        if 'ad_headline_2' in data:
+            ad_group.ad_headline_2 = data['ad_headline_2']
+        if 'ad_headline_3' in data:
+            ad_group.ad_headline_3 = data['ad_headline_3']
+        if 'ad_description' in data:
+            ad_group.ad_description = data['ad_description']
+        if 'ad_description_2' in data:
+            ad_group.ad_description_2 = data['ad_description_2']
+        if 'final_url' in data:
+            ad_group.final_url = data['final_url']
+        if 'display_url' in data:
+            ad_group.display_url = data['display_url']
+        
+        db.session.commit()
+        
+        return jsonify(ad_group.to_dict()), 200
+    
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ad-groups/<uuid:id>', methods=['DELETE'])
+def delete_ad_group(id):
+    """Delete an ad group"""
+    try:
+        ad_group = AdGroup.query.get_or_404(id)
+        db.session.delete(ad_group)
+        db.session.commit()
+        
+        return jsonify({'message': 'Ad group deleted successfully'}), 200
+    
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ad-groups/<uuid:id>/pause', methods=['POST'])
+def pause_ad_group(id):
+    """Pause an ad group"""
+    try:
+        ad_group = AdGroup.query.get_or_404(id)
+        ad_group.status = 'PAUSED'
+        db.session.commit()
+        
+        return jsonify(ad_group.to_dict()), 200
+    
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ad-groups/<uuid:id>/enable', methods=['POST'])
+def enable_ad_group(id):
+    """Enable an ad group"""
+    try:
+        ad_group = AdGroup.query.get_or_404(id)
+        ad_group.status = 'ENABLED'
+        db.session.commit()
+        
+        return jsonify(ad_group.to_dict()), 200
+    
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
