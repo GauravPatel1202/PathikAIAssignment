@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules (frontend)
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.egg
+
+# Logs
+*.log
+logs/
+
+# Migration (keep migrations folder but ignore pycache)
+migrations/__pycache__/
