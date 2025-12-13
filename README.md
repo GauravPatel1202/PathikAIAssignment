@@ -6,7 +6,6 @@ A full-stack application (React + Flask + PostgreSQL) to manage and publish Goog
 
 - **Campaign Management**: Create, view, publish, and disable campaigns.
 - **Google Ads Integration**: Seamlessly pushes campaigns to your Google Ads account.
-- **AI Ad Copy Generator**: Auto-generates headlines and descriptions based on your campaign name.
 - **Live Ad Preview**: Visualizes how your ad will appear on Google Search in real-time.
 - **Performance Analytics**: View mocked Impressions, Clicks, Cost, and ROAS data for active campaigns.
 - **Premium UI**: Glassmorphic design with smooth animations and responsive layout.
